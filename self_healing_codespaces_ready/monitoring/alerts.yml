@@ -1,0 +1,10 @@
+groups:
+  - name: service-health
+    rules:
+      - alert: ServiceUnavailable
+        expr: up{job="demo-services"} == 0 or (up{job="demo-services"} == 1 and demo_fault{job="demo-services"} == 1)
+        for: 10s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.instance }} unhealthy"

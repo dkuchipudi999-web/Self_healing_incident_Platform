@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+rule_files: ["/etc/prometheus/alerts.yml"]
+scrape_configs:
+  - job_name: demo-services
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["orders:8080", "inventory:8080", "payments:8080"]

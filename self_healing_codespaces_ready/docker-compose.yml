@@ -1,0 +1,57 @@
+name: selfheal
+services:
+  orders:
+    build: ./java-service
+    container_name: selfheal-orders
+    environment:
+      SERVICE_NAME: orders
+      PORT: 8080
+      INVENTORY_URL: http://inventory:8080
+      PAYMENT_URL: http://payments:8080
+    ports: ["127.0.0.1:8081:8080"]
+    restart: unless-stopped
+  inventory:
+    build: ./java-service
+    container_name: selfheal-inventory
+    environment:
+      SERVICE_NAME: inventory
+      PORT: 8080
+    ports: ["127.0.0.1:8082:8080"]
+    restart: unless-stopped
+  payments:
+    build: ./java-service
+    container_name: selfheal-payments
+    environment:
+      SERVICE_NAME: payments
+      PORT: 8080
+    ports: ["127.0.0.1:8083:8080"]
+    restart: unless-stopped
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    ports: ["127.0.0.1:9090:9090"]
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    ports: ["127.0.0.1:9093:9093"]
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+  grafana:
+    image: grafana/grafana:11.2.0
+    ports: ["127.0.0.1:3000:3000"]
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: demo123
+    volumes:
+      - ./monitoring/grafana-datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
+  orchestrator:
+    build:
+      context: .
+      dockerfile: orchestrator.Dockerfile
+    ports: ["127.0.0.1:8090:8090"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      SERVICE_HOST: http://inventory:8080
+    restart: unless-stopped
